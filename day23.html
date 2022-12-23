@@ -1,0 +1,190 @@
+<pre id="body"></pre>
+<script src="input23.js"></script>
+<script>
+
+    data = data.split('\n').map(x => x.split(''));
+
+    const MAXROUND = 10;
+    //Grille[y][x]=cell
+    let grille = [];
+    let dir = [
+        [[-1, -1], [0, -1], [1, -1]],
+        [[-1, 1], [0, 1], [1, 1]],
+        [[-1, 1], [-1, 0], [-1, -1]],
+        [[1, 1], [1, 0], [1, -1]]
+    ];
+
+    /**
+     * valeur : "." or "#"
+     * elf : list of the [x,y] of the elfs who want to go in this cell
+     * */
+    class Cell {
+        constructor(valeur) {
+            this.valeur = valeur;
+            this.elf = [];
+        }
+    }
+
+    //enlarge the grille if needed
+    function augmenterGrille() {
+        let [xmin,ymin,xmax,ymax]=getMinMax();
+
+        if (ymin==0) {
+            let ligne=[];
+            for(let j=0; j<grille[0].length;j++)
+                ligne[j]=new Cell(".");
+            grille.unshift(ligne);
+            ymax++;
+        }
+
+        if (xmin==0) {
+            for(let i=0; i<grille.length;i++) {
+                grille[i].unshift(new Cell("."));
+            }
+            xmax++;
+        }
+
+        if (xmax==grille[0].length-1) {
+            for(let i=0; i<grille.length;i++) {
+                grille[i].push(new Cell("."));
+            }
+        }
+
+        if (ymax==grille.length-1) {
+            let ligne=[];
+            for(let j=0; j<grille[0].length;j++)
+                ligne[j]=new Cell(".");
+            grille.push(ligne);
+        }
+    }
+
+    function initGrille() {
+        for (let i = 0; i < data.length; i++) {
+            grille[i] = [];
+            for (let j = 0; j < data[0].length; j++) grille[i][j] = new Cell(data[i][j]);            
+        }   
+    }
+
+    function computeRound() {
+        //potential move
+        for (let i = 1; i < grille.length-1; i++) {
+            for (let j = 1; j < grille[i].length-1; j++) {
+                if (grille[i][j].valeur==='#') {
+                    let vide=[];
+                    for(let k=0; k<dir.length; k++) {
+                        vide[k]=true;
+                        for(let t=0; t<3; t++) vide[k]=vide[k] && grille[i+dir[k][t][1]][j+dir[k][t][0]].valeur===".";                        
+                    }
+
+                    if (!(vide[0] && vide[1] && vide[2] && vide[3])) {
+                        if (vide[0])
+                            grille[i+dir[0][1][1]][j+dir[0][1][0]].elf.push([j,i]);
+                        else if (vide[1])
+                            grille[i+dir[1][1][1]][j+dir[1][1][0]].elf.push([j,i]);
+                        else if (vide[2])
+                            grille[i+dir[2][1][1]][j+dir[2][1][0]].elf.push([j,i]);
+                        else if (vide[3])
+                            grille[i+dir[3][1][1]][j+dir[3][1][0]].elf.push([j,i]);
+                    }
+                }
+            }
+        }
+
+        //effective move
+        let nbmove=0;
+        for (let i = 0; i < grille.length; i++) {
+            for (let j = 0; j < grille[i].length; j++) {
+                if (grille[i][j].elf.length>1)
+                    grille[i][j].elf=[];
+                else if (grille[i][j].elf.length==1) {
+                    nbmove++;
+                    let [x,y]=grille[i][j].elf[0];
+                    grille[i][j].valeur="#";
+                    grille[y][x].valeur=".";
+                    grille[i][j].elf=[];
+                }
+            }
+        }
+
+        //next order for the dirs
+        let d=dir.shift();
+        dir.push(d);
+
+        augmenterGrille();
+
+        return nbmove;
+    }
+
+    //get used rectangle of the grille
+    function getMinMax() {
+        let [xmin,ymin,xmax,ymax]=[+Infinity,+Infinity,-Infinity,-Infinity];
+        for (let i = 0; i < grille.length; i++) {
+            for (let j = 0; j < grille[i].length; j++) {
+                if (grille[i][j].valeur==="#") {
+                    if (xmin>j) xmin=j;
+                    if (xmax<j) xmax=j;
+                    if (ymin>i) ymin=i;
+                    if (ymax<i) ymax=i;
+                }
+            }
+        }
+
+        return [xmin,ymin,xmax,ymax];
+    }
+
+    //HTML display of the grille
+    function affiche() {
+        let tab="";
+        for (let i = 0; i < grille.length; i++) {
+            let ligne="";
+            for (let j = 0; j < grille[i].length; j++) {
+                ligne+=grille[i][j].valeur;
+            }
+            tab+=ligne+"\n";
+        }
+        tab+="<hr>";
+        let body=document.getElementById("body");
+        body.innerHTML+=tab;
+    }
+       
+
+    function part1() {
+        initGrille();
+        augmenterGrille();
+
+        for(let i=0; i<MAXROUND;i++) {
+            computeRound();                    
+        }
+
+        let [xmin,ymin,xmax,ymax]=getMinMax();
+        //console.log([xmin,ymin,xmax,ymax]);
+
+        let cpt=0;
+        for(let i=ymin; i<=ymax; i++) {
+            for(let j=xmin; j<=xmax; j++) {
+                if (grille[i][j].valeur===".") cpt++;
+            }    
+        }
+        
+        console.log(cpt);
+
+        //affiche();
+    }    
+
+    function part2() {
+        initGrille();
+        augmenterGrille();
+
+        let cpt=1;
+        while(computeRound()!=0) {
+            cpt++;
+        }        
+        
+        console.log(cpt);
+    }
+
+    let start=Date.now();
+    part2();
+    console.log(Date.now()-start);
+
+</script>
