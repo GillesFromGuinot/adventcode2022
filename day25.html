@@ -1,0 +1,37 @@
+<script src="input25.js"></script>
+<script>
+    let letter2num = { "2": 2, "1": 1, "0": 0, "-": -1, "=": -2 }
+    let num2letter = ["0","1","2","=","-"];
+
+    function SNAFU2dec(s) {
+        s=s.split('').reverse();
+        let n=0;
+        for(let i=0; i<s.length; i++) 
+            n+=letter2num[s[i]]*Math.pow(5,i);
+        
+        return n;
+    }
+
+    function dec2SNAFU(n) {
+        let s=[];        
+        while (n!=0) {
+            let q=Math.floor(n/5);
+            let r=n%5;
+            s.push(num2letter[r]);
+            if (r>=3) q++;
+            n=q;
+        }
+
+        return s.reverse().join('');
+    }
+
+    function part1() {
+        let somme=0;
+        data=data.split('\n');
+        data.forEach(s => somme += SNAFU2dec(s));                
+        console.log(dec2SNAFU(somme));
+    }
+
+    part1();
+
+</script>
